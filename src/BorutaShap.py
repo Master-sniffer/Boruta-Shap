@@ -17,6 +17,8 @@ import seaborn as sns
 import shap
 import os
 import re
+from numba import njit, jit
+
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -29,7 +31,7 @@ class BorutaShap:
 
     """
 
-    def __init__(self, model=None, importance_measure='Shap',
+    def __init__(self, model=None, importance_measure='shap',
                 classification=True, percentile=100, pvalue=0.05):
 
         """
@@ -496,6 +498,7 @@ class BorutaShap:
     def transform(self, X):
         return self.Subset(self)
         
+    @jit(fastmath = True,nopython=False)
     def calculate_rejected_accepted_tentative(self, verbose):
 
         """
@@ -517,7 +520,7 @@ class BorutaShap:
             print(str(len(self.tentative)) + ' tentative attributes remains: ' + str(self.tentative))
 
 
-
+    @jit(fastmath = True,forceobj=False)
     def create_importance_history(self):
 
         """
@@ -534,6 +537,7 @@ class BorutaShap:
         self.history_hits = np.zeros(self.ncols)
 
 
+    @jit(looplift=True,forceobj=False)
     def update_importance_history(self):
 
         """
@@ -607,6 +611,7 @@ class BorutaShap:
         features.to_csv(filename + '.csv', index=False)
 
 
+    @jit(looplift=True,forceobj=False)
     def remove_features_if_rejected(self):
 
         """
@@ -626,10 +631,12 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(fastmath = True,nopython=True, parallel=True)
     def average_of_list(lst):
         return sum(lst) / len(lst)
 
     @staticmethod
+    @jit(looplift=True)
     def flatten_list(array):
         return [item for sublist in array for item in sublist]
 
@@ -638,6 +645,7 @@ class BorutaShap:
         return dict(zip(self.X.columns.to_list(), np.arange(self.X.shape[1])))
 
 
+    @jit(looplift=True,forceobj=False)
     def calculate_hits(self):
 
         """
@@ -690,6 +698,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(fastmath = True, looplift=True,nopython=True, parallel=True)
     def calculate_Zscore(array):
         """
         Calculates the Z-score of an array
@@ -780,6 +789,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(fastmath = True,nopython=True, parallel=True)
     def get_5_percent(num):
         return round(5  / 100 * num)
 
@@ -792,7 +802,7 @@ class BorutaShap:
         return np.arange(five_percent,length,five_percent)
 
 
-
+    @jit(looplift=True,nopython=True, parallel=True)
     def find_sample(self):
         '''
         Finds a sample by comparing the distributions of the anomally scores between the sample and the original
@@ -819,7 +829,7 @@ class BorutaShap:
         return self.X_boruta.iloc[sample_indices]
 
 
-
+    @jit(fastmath=True,forceobj=False, parallel=True)
     def explain(self):
 
         """
@@ -894,6 +904,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit
     def binomial_H0_test(array, n, p, alternative):
         """
         Perform a test that the probability of success is p.
@@ -917,6 +928,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(fastmath=True,nopython=True, parallel=True)
     def bonferoni_corrections(pvals, alpha=0.05, n_tests=None):
         """
         used to counteract the problem of multiple comparisons.
@@ -1036,6 +1048,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(looplift=True,nopython=True, parallel=True)
     def create_list(array, color):
         colors = [color for x in range(len(array))]
         return colors
@@ -1047,6 +1060,7 @@ class BorutaShap:
 
 
     @staticmethod
+    @jit(looplift=True,nopython=True, parallel=True)
     def hasNumbers(inputString):
         return any(char.isdigit() for char in inputString)
 
