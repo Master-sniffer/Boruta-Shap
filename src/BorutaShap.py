@@ -1014,8 +1014,8 @@ class BorutaShap:
 
         """
 
-        median_tentaive_values = self.history_x[self.tentative].median(axis=0).values
-        median_max_shadow = self.history_x['Max_Shadow'].median(axis=0)
+        median_tentaive_values = self.history_x[self.tentative].median(axis=0,engine='cython').values
+        median_max_shadow = self.history_x['Max_Shadow'].median(axis=0,engine='cython')
 
 
         filtered = median_tentaive_values > median_max_shadow
